@@ -10,7 +10,7 @@ CSVChecker is a tool for working with `.csv` files. It allows you to remove dupl
 ## Installation
 Clone the repository and navigate to the directory:
 ```bash
-git clone https://github.com/s1z1-balance/csvchecker
+git clone https://github.com/s1z1-balance/csvchecker.git
 cd csvchecker
 ```
 Install dependencies if required:
