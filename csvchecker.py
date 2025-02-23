@@ -4,7 +4,6 @@ from tqdm import tqdm
 import time
 import webbrowser
 from colorama import Style, init, Fore
-import glob
 
 init(autoreset=True)
 
@@ -27,8 +26,7 @@ def main():
         options = {
              "1": ("remove duplicates from csv", process_csv_files, {"mode": "remove_duplicates"}),
              "2": ("delete not utf-8 csv", process_csv_files, {"mode": "clean_strings"}),
-             "3": ("delete .tmp files", delete_tmp),
-             "4": ("my github", open_github)
+             "3": ("my github", open_github)
         }
 
         while True:
@@ -62,20 +60,13 @@ def open_github():
     os.system("cls" if os.name == "nt" else "clear")
     print(Fore.BLUE + a)
 
-def delete_tmp():
-    directory = input("enter the path to the directory with .tmp files: ")
-    for file_path in glob.glob(os.path.join(directory, '**', '*.tmp'), recursive=True):
-        try:
-            os.remove(file_path)
-            print(f'deleted: {file_path}')
-        except Exception as e:
-            print(f'error during deletion {file_path}: {e}')
-    
-   
 def process_csv_files(directory, mode="remove_duplicates"):
     csv_files = [file for file in os.listdir(directory) if file.endswith(".csv")]
     if not csv_files:
         print("there are no .csv files in the specified directory.")
+        time.sleep(0.8)
+        os.system("cls" if os.name == "nt" else "clear")
+        print(Fore.BLUE + a)
         return
 
     print(f"detected {len(csv_files)} .csv files. Beginning processing...")
