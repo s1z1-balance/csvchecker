@@ -171,7 +171,7 @@ Y8b  d8 db   8D  `8bd8'  Y8b  d8 88   88 88.     Y8b  d8 88 `88. 88.     88 `88.
                     print(f"[{k}] {desc}")
                 print("[0] exit")
                 
-                choice = input("\n┌──(csvprocessor@root)\n└─$ ").strip()
+                choice = input("\n┌──(csvchecker@root)\n└─$ ").strip()
                 
                 if choice == "0":
                     print("goodbye..")
