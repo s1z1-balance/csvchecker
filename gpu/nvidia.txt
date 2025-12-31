@@ -1,0 +1,3 @@
+# u need to install this lib if u want to use gpu cudf, if you have amd card u need to install libs from amd.txt (i will create support to amd gpu's)
+cudf-cu12==24.12.*
+# if cuda 11: replace with cudf-cu11==24.12.*
