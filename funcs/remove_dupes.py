@@ -1,4 +1,3 @@
-# funcs/remove_dupes.py
 from pathlib import Path
 
 def stdlib(file_path: Path):
@@ -45,6 +44,9 @@ def polars(file_path: Path):
     return file_path.name, total, unique
 
 def process(file_path: Path, engine: str):
+    if engine == 'hipdf':
+        from gpu.hipdf_funcs import remove_duplicates
+        return remove_duplicates(file_path)
     if engine == 'cudf':
         from gpu.cudf_funcs import remove_duplicates
         return remove_duplicates(file_path)

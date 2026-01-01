@@ -1,4 +1,3 @@
-# funcs/convert_encoding.py
 from pathlib import Path
 
 def detect(file_path: Path) -> str:

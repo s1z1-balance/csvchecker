@@ -1,4 +1,3 @@
-# funcs/split_csv.py
 from pathlib import Path
 
 def stdlib(file_path: Path, rows_per_chunk: int, output_dir: Path):
@@ -48,6 +47,9 @@ def polars(file_path: Path, rows_per_chunk: int, output_dir: Path):
     return file_path.name, chunks
 
 def process(file_path: Path, rows_per_chunk: int, output_dir: Path, engine: str):
+    if engine == 'hipdf':
+        from gpu.hipdf_funcs import split_file
+        return split_file(file_path, rows_per_chunk, output_dir)
     if engine == 'cudf':
         from gpu.cudf_funcs import split_file
         return split_file(file_path, rows_per_chunk, output_dir)

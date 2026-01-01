@@ -1,4 +1,3 @@
-# csvchecker.py
 import os
 from pathlib import Path
 from typing import List
@@ -17,7 +16,7 @@ class CSVProcessor:
 """
 
     __slots__ = ('ops', 'max_workers', 'chunk_size', '_has_deps', '_tqdm', '_fore', '_polars_available',
-                 '_chardet_available', '_chardet', 'gpu_enabled', 'gpu_vendor', '_cudf_available')
+                 '_chardet_available', '_chardet', 'gpu_enabled', 'gpu_vendor', '_cudf_available', '_hipdf_available')
 
     def __init__(self):
         self.ops = {
@@ -37,6 +36,7 @@ class CSVProcessor:
         self.gpu_enabled = False
         self.gpu_vendor = None
         self._cudf_available = None
+        self._hipdf_available = None
         self._detect_gpu()
 
     def _detect_gpu(self):
@@ -84,6 +84,16 @@ class CSVProcessor:
         except ImportError:
             self._cudf_available = False
         return self._cudf_available
+
+    def _check_hipdf(self):
+        if self._hipdf_available is not None:
+            return self._hipdf_available
+        try:
+            import hipdf
+            self._hipdf_available = True
+        except ImportError:
+            self._hipdf_available = False
+        return self._hipdf_available
 
     def _init_deps(self):
         if self._has_deps is not None:
@@ -133,7 +143,7 @@ class CSVProcessor:
             return
 
         if self.gpu_vendor == 'amd':
-            print("amd gpu detected. for full gpu acceleration you need rocm + rapids/cudf built for rocm")
+            print("amd gpu detected. for full gpu acceleration you need rocm + hipdf or rapids/cudf")
 
         self.gpu_enabled = not self.gpu_enabled
         print(f"gpu acceleration now {'enabled' if self.gpu_enabled else 'disabled'}")
@@ -152,16 +162,18 @@ class CSVProcessor:
             print("no csv files found")
             return
 
+        use_hipdf = self.gpu_enabled and self.gpu_vendor == 'amd' and self._check_hipdf()
         use_cudf = self.gpu_enabled and self._check_cudf()
-        use_polars = self._check_polars() if not use_cudf else False
-        engine = 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
+        use_gpu = use_hipdf or use_cudf
+        use_polars = self._check_polars() if not use_gpu else False
+        engine = 'hipdf' if use_hipdf else 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
 
         accel = ""
-        if use_cudf:
+        if use_gpu:
             accel = f" (gpu accelerated via {'rocm' if self.gpu_vendor == 'amd' else 'cuda'})"
 
-        if self.gpu_enabled and not use_cudf and self.gpu_vendor:
-            print("warning: cudf not available - falling back to polars or stdlib")
+        if self.gpu_enabled and self.gpu_vendor and not use_gpu:
+            print("warning: no gpu library available (hipdf or cudf) - falling back to polars or stdlib")
 
         print(f"found {len(files)} csv files")
         print(f"engine: {engine}{accel}")
@@ -214,16 +226,18 @@ class CSVProcessor:
         output_dir = directory / "split_output"
         output_dir.mkdir(exist_ok=True)
 
+        use_hipdf = self.gpu_enabled and self.gpu_vendor == 'amd' and self._check_hipdf()
         use_cudf = self.gpu_enabled and self._check_cudf()
-        use_polars = self._check_polars() if not use_cudf else False
-        engine = 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
+        use_gpu = use_hipdf or use_cudf
+        use_polars = self._check_polars() if not use_gpu else False
+        engine = 'hipdf' if use_hipdf else 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
 
         accel = ""
-        if use_cudf:
+        if use_gpu:
             accel = f" (gpu accelerated via {'rocm' if self.gpu_vendor == 'amd' else 'cuda'})"
 
-        if self.gpu_enabled and not use_cudf and self.gpu_vendor:
-            print("warning: cudf not available - falling back to polars or stdlib")
+        if self.gpu_enabled and self.gpu_vendor and not use_gpu:
+            print("warning: no gpu library available (hipdf or cudf) - falling back to polars or stdlib")
 
         print(f"found {len(files)} csv files")
         print(f"engine: {engine}{accel}")
