@@ -42,14 +42,25 @@ class CSVProcessor:
     def _detect_gpu(self):
         if self.gpu_vendor is not None:
             return
+        
+        has_cudf = self._check_cudf()
+        has_hipdf = self._check_hipdf()
+        
+        if has_cudf:
+            self.gpu_vendor = 'nvidia'
+            return
+        if has_hipdf:
+            self.gpu_vendor = 'amd'
+            return
+        
         try:
             import torch
             if torch.cuda.is_available():
                 name = torch.cuda.get_device_name(0).lower()
-                if any(k in name for k in ['nvidia', 'geforce', 'rtx', 'quadro', 'tesla']):
-                    self.gpu_vendor = 'nvidia'
-                elif any(k in name for k in ['amd', 'radeon', 'rx', 'instinct']):
+                if any(k in name for k in ['amd', 'radeon', 'rx', 'instinct']):
                     self.gpu_vendor = 'amd'
+                else:
+                    self.gpu_vendor = 'nvidia'
         except Exception:
             pass
 
@@ -137,13 +148,14 @@ class CSVProcessor:
 
     def _toggle_gpu(self):
         self._detect_gpu()
+        
         if not self.gpu_vendor:
             print("no gpu detected")
             self.gpu_enabled = False
             return
 
         if self.gpu_vendor == 'amd':
-            print("amd gpu detected. for full gpu acceleration you need rocm + hipdf or rapids/cudf")
+            print("amd gpu detected. for full gpu acceleration you need rocm + hipdf")
 
         self.gpu_enabled = not self.gpu_enabled
         print(f"gpu acceleration now {'enabled' if self.gpu_enabled else 'disabled'}")
@@ -163,7 +175,7 @@ class CSVProcessor:
             return
 
         use_hipdf = self.gpu_enabled and self.gpu_vendor == 'amd' and self._check_hipdf()
-        use_cudf = self.gpu_enabled and self._check_cudf()
+        use_cudf = self.gpu_enabled and self.gpu_vendor == 'nvidia' and self._check_cudf()
         use_gpu = use_hipdf or use_cudf
         use_polars = self._check_polars() if not use_gpu else False
         engine = 'hipdf' if use_hipdf else 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
@@ -227,7 +239,7 @@ class CSVProcessor:
         output_dir.mkdir(exist_ok=True)
 
         use_hipdf = self.gpu_enabled and self.gpu_vendor == 'amd' and self._check_hipdf()
-        use_cudf = self.gpu_enabled and self._check_cudf()
+        use_cudf = self.gpu_enabled and self.gpu_vendor == 'nvidia' and self._check_cudf()
         use_gpu = use_hipdf or use_cudf
         use_polars = self._check_polars() if not use_gpu else False
         engine = 'hipdf' if use_hipdf else 'cudf' if use_cudf else 'polars' if use_polars else 'stdlib'
